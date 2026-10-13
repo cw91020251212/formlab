@@ -1,14 +1,80 @@
 # FormLab · 界面工坊
 
-React / Express / tRPC / Drizzle starter, adapted from the Sandbox web-db-user template.
+无需后端的可视化界面编辑器。手动重制另一个软件的**表面界面**，输出独立 HTML，交给其他 AI 根据原软件源码实现。它不会连接、注入或直接修改另一个正在运行的软件。
 
-- `pnpm dev`: development server; honors `PORT` (default 3000).
-- `pnpm build` / `pnpm start`: build and serve `dist/index.js` and `dist/public/`.
-- `pnpm db:migrate`: apply checked-in migrations. `pnpm db:push`: generate and apply new schema changes.
-- `pnpm check` / `pnpm test`: types and application tests.
+## 使用
 
-Start with the Webdev skill's default-template guide. Platform login, storage, payments and service contracts live in its shared references; read the relevant capability before extending its helper.
+默认打开可编辑的 Orbit 工作台示例。左侧选择「模板 → 空白画布」可从零开始，也可以先上传软件截图作为半透明参考，再用元件描摹。参考图只用于编辑，不会导出；真实图片元件会内嵌到 HTML 和项目中。
 
-`server/_core/publicConfig.ts` exposes only named public runtime values. Private keys stay server-side. The platform serves managed `/manus-storage/` assets; the application does not register a second proxy.
+在左侧点击或拖出文字、按钮、容器、输入框和图片。点击画布选择元件，拖动位置，拉动四个角修改尺寸。在右侧设置坐标、尺寸、字体、字号、字重、行高、文字对齐、内边距、背景、文字色、边框、圆角、透明度和预设阴影。色值输入完成后按 Enter 或移开焦点应用。
 
-Platform configuration is readable and editable through `webdev.config`. Default settings are initial values, not enforced constraints. The agent may modify the files, commands and configuration or follow the flexible guide for another stack.
+Shift 点击可多选，通过画布下方浮动工具栏对齐、分配间距（至少三个元件）和调整层级。图层列表可命名、锁定、隐藏、复制和删除。「预览」隐藏编辑控件，展示纯界面。
+
+Ctrl / ⌘ + Z 撤销；Ctrl / ⌘ + Shift + Z 重做；Ctrl / ⌘ + D 复制；Delete 删除；方向键微调 1px，Shift + 方向键微调 10px。可开启 8px 网格吸附。
+
+## 保存与分享
+
+设计自动保存到当前浏览器的 localStorage，保留 100 个撤销快照，不会为了限制项目数量而静默删除旧设计。「我的项目」支持打开、新建、复制当前项目和导入 JSON。重要设计应通过「导出 → FormLab 项目」下载备份；本机空间不足或存储损坏时界面会提示，请不要切换或清空浏览器，先导出。读取时会保留有效项目；部分损坏的原始记录会另存到恢复键，完全无法解析的记录不会被覆盖。
+
+「分享」将完整设计压缩到 URL 的 hash，不依赖数据库。收件人打开链接会进入纯界面预览，可返回编辑并保存副本，修改不会影响原设计。链接是固定快照，更新设计后需要重新生成。**任何获得链接的人都可查看完整设计；请勿放入密码或敏感资料。**
+
+分享需要接收方可以访问链接对应的网站。换到 GitHub Pages 地址后，应在正式网站重新生成链接。较大图片容易导致链接过长，软件会提示改用 JSON 项目文件分享。压缩分享需要支持 CompressionStream / DecompressionStream 的现代浏览器，不支持时仍可使用 JSON 文件。
+
+## 导出给 AI
+
+「静态 HTML」包含内嵌 CSS 和已上传的图片，可独立打开，无外部服务依赖。按钮无业务行为，输入框为视觉模型。隐藏图层不导出到 HTML，但仍保留在项目文件中。
+
+建议将 **HTML + AI 实现说明 + 原软件源码** 交给其他 AI，并说明：
+
+> 根据 HTML 还原界面与样式；保留原软件已有的数据接口、业务逻辑、权限、状态及按钮功能。不要把静态示例误当成业务实现。
+
+## 直接部署预构建包到 GitHub Pages
+
+1. 解压 `FormLab-GitHub-Pages.zip`，将**里面的文件**上传至目标 GitHub 仓库的根目录。根目录应直接包含 `index.html`、`assets/` 和 `.nojekyll`，不要在外层再套一个文件夹。
+2. 在 GitHub 的 **Settings → Pages** 中，选择 **Deploy from a branch**，分支选 `main`，目录选 `/ (root)`，保存。
+3. 等待 GitHub 完成部署，打开 Pages 地址即可使用。这个包无需安装 Node，也无需填写 API Key。
+
+Pages 是否可以用于私有仓库取决于账户及仓库配置；如当前仓库无法启用，请自行选择允许 Pages 的仓库。此交付不会自动创建公开仓库或公开你的文件。
+
+## 从源码开发与部署
+
+需要 Node.js 22 和 pnpm 10.18.0。
+
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm dev:static
+```
+
+本地打开终端显示的地址（默认 `http://localhost:3000`）。应用运行时不需要 Express、数据库或平台 API；模板中保留的后端文件不参与静态应用。依赖清单沿用已安装模板，避免为了第一版更换整个工具链。
+
+```bash
+pnpm check
+pnpm test
+pnpm build:static
+```
+
+输出位于 `dist/public/`。Vite 的 `base: './'` 使用相对资源路径，支持 GitHub 仓库子路径。只使用一个页面和 URL hash，无需服务器路由回退。
+
+源码带有 `.github/workflows/pages.yml`：将代码提交到 GitHub 后，在 **Settings → Pages → Source** 选择 **GitHub Actions**；手动运行 Deploy FormLab to GitHub Pages 工作流，或提交到 `main` 自动部署。请在确认希望公开该网站后再启用 Pages。
+
+## 项目结构
+
+`client/src/pages/Home.tsx` 负责工作区、图层、工具栏、分享和文件交互；`editor/Canvas.tsx` 负责 DOM 画布与拖拽；`Inspector.tsx` 提供样式面板；`model.ts` 统一数据校验、导出、分享和本机保存；`useDesign.ts` 维护撤销重做与自动保存；`templates.ts` 提供可编辑模板；`model.test.ts` 提供核心逻辑测试。
+
+## 第一版边界
+
+画布是固定尺寸的绝对坐标布局。桌面/平板/手机按钮只改画布规格，**不会自动重新排版**。容器是普通视觉图层；图层结构为画布下的平面列表，不提供嵌套容器布局。Shift 点击多选后松开 Shift，再拖动选中元件可整体移动；多选也支持对齐、等间距和批量属性。尺寸可以用拖动角点或属性面板精确调整。编辑时允许把图层暂放到画布外；预览与 HTML 导出都会裁剪越界部分。
+
+支持上传 PNG、JPG、WebP、GIF，单张最大 2MB；项目最多 500 个图层，导入文件最大 12MB。导入数据经过验证，不接受脚本、远程图片地址或 SVG 数据 URL。HTML 和 JSON 不会自动还原截图内部的文字、按钮结构，也不提供实时多人协作。
+
+## 实现参考
+
+[Vite 官方静态部署文档](https://vite.dev/guide/static-deploy)与[子路径 base 配置讨论](https://github.com/vitejs/vite/issues/14898)。项目使用相对 base，避免仓库更名后硬编码路径失效。
+
+
+## 英文名与手机桌面图标
+
+英文名为 **FormLab**：Form 指界面形态，Lab 指自由尝试与制作的工坊。建议 GitHub 仓库名使用 `formlab`。这是产品命名建议，不代表已注册商标、域名或 GitHub 仓库。
+
+应用提供 180px Apple Touch Icon 和 192px / 512px Web App Manifest 图标。部署到 HTTPS 后，iPhone / iPad 使用 Safari 打开网站，点分享按钮，再选「添加到主屏幕」；Android 使用浏览器菜单中的「添加到主屏幕」或「安装应用」（名称和可用性随浏览器而异）。桌面名称为 FormLab；启动以独立应用形式显示。当前不提供离线缓存，打开应用仍需要网络。手机适合预览与分享；精细编辑建议使用桌面浏览器。

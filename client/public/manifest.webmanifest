@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "FormLab · 界面工坊",
+  "short_name": "FormLab",
+  "description": "手动设计软件界面，导出 HTML 与分享视觉原型。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#197d70",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
